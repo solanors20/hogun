@@ -1,0 +1,13 @@
+{
+  "name": "coopetraca_adm",
+  "version": "1.0.0",
+  "description": "Servicios de informacion de rutas y tarifas",
+  "main": "server.js",
+  "author": "Steven Solano Rojas",
+  "dependencies" : {
+    "body-parser"    : "^1.4.3",
+    "express"        : "^4.13.4",
+	  "mysql"			     : "^2.10.2",
+    "body-parser"    : ""
+  }
+}
