@@ -6,10 +6,12 @@ var connection = mysql.createConnection({
    host: 'localhost',
    user: 'root',
    password: 'le0r0ck$!',
-   database: 'BusTicketDB',
+   database: 'busticketdb',
    port: 3306
 });
-
+    // Localización de los ficheros estÃ¡ticos
+    app.use(express.static(__dirname + '/public'));
+	app.use(bodyParser.json());                                     // parse application/json
 app.use(bodyParser.urlencoded({extended: true}));  
 
 app.get('/tarifas/listar/', function (req, res) {
@@ -71,6 +73,49 @@ app.post('/tiquetes/agregar', function	(req, res){
 	}else{
 		res.json({"Error" : "Parametros no validos"});
 	}
+});
+
+
+
+
+
+
+app.get('/resumen', function (req, res) {
+	connection.query('SELECT Ruta.nombre, SUM(TOTAL) total FROM Tiquete inner join Ruta on Tiquete.ruta = Ruta.idRuta', function(error, filas, resultado){
+      if(error){
+         res.send(error);
+      }else{
+         if(resultado.length > 0){
+            res.json(filas);
+         }else{
+            console.log('Registro no encontrado');
+         }
+      }
+   });
+
+})
+
+
+app.post('/resumen', function (req, res) {
+	console.log(req.body.fecha);
+connection.query('SELECT Ruta.nombre, SUM(TOTAL) total FROM Tiquete inner join Ruta on Tiquete.ruta = Ruta.idRuta where date(fecha) = ?', [req.body.fecha], function(error, filas, resultado){
+      if(error){
+         res.send(error);
+      }else{
+         if(resultado.length > 0){
+            res.json(filas);
+         }else{
+            console.log('Registro no encontrado');
+         }
+      }
+   });
+})
+
+
+
+
+app.get('/', function(req, res) {  
+    res.sendFile('./public/index.html');            
 });
 
 var server = app.listen(8081, function () {
