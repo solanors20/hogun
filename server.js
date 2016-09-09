@@ -9,7 +9,7 @@ var config = require('./config'); // get our config file
 var connection = mysql.createConnection({
    host: 'localhost',
    user: 'root',
-   password: 'le0r0ck$!',
+   password: '',
    database: 'busticketdb',
    port: 3306
 });
