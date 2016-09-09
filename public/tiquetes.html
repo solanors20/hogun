@@ -1,0 +1,86 @@
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+  	<h1 class="page-header">Tiquetes</h1>
+  	<form class="form-inline">
+  	<div class="row">
+	  <div class="col-lg-3">
+	    <div class="input-group">
+	    <select class="form-control" ng-model="busSeleccionado" ng-options="bus as bus.placa for bus in buses track by bus.id">
+    
+</select>
+	      
+	    </div><!-- /input-group -->
+	  </div><!-- /.col-lg-6 -->
+	  <div class="col-lg-3">
+	    <div class="input-group">
+	    <select class="form-control" 
+	    		ng-init="rutaSeleccionada = rutas[0].nombre" 
+	    		ng-model="rutaSeleccionada" 
+	    		ng-options="ruta as ruta.nombre for ruta in rutas track by ruta.idRuta">
+		</select>
+	      
+	    </div><!-- /input-group -->
+	  </div><!-- /.col-lg-6 -->
+	  <div class="col-lg-4">
+	    <div class="input-group">
+	    	<input type="text" id="datepicker" ng-model="formData.fecha">
+		<button type="submit" class="btn btn-default btn-success" ng-click="obtenerTiquetes()">Consultar</button>
+	    </div>
+	  </div>
+	</div><!-- /.row -->
+	</form>
+	<br>
+	<br>
+    <table class="table table-striped" at-table at-paginated at-list="tiquetes" at-config="config">
+		<thead>
+	        
+      	</thead>
+	  	<tbody>
+		  	<tr>
+		      <td at-implicit at-sortable at-attribute="fecha" at-initial-sorting="asc"></td>
+		      <td at-implicit at-sortable at-attribute="origen"></td>
+		      <td at-implicit at-sortable at-attribute="destino"></td>
+		      <td at-implicit at-sortable at-attribute="total"></td>
+		      <td at-implicit at-sortable at-attribute="cantidad"></td>
+		      <td  at-title="Adulto Mayor"><a ng-if="item.cedula" href="{{item.cedula}}">Mostrar</a></td>
+	  		</tr>
+	  	</tbody>
+	</table>
+	<at-pagination at-list="tiquetes" at-config="config"></at-pagination>
+	  
+
+	<br>
+	<br>
+	<br>
+	<br>
+	<br>
+	<p></p>
+
+  <script>
+  $( function() {
+  	$.datepicker.regional['es'] = {
+ closeText: 'Cerrar',
+ prevText: '<Ant',
+ nextText: 'Sig>',
+ currentText: 'Hoy',
+ monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+ monthNamesShort: ['Ene','Feb','Mar','Abr', 'May','Jun','Jul','Ago','Sep', 'Oct','Nov','Dic'],
+ dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+ dayNamesShort: ['Dom','Lun','Mar','Mié','Juv','Vie','Sáb'],
+ dayNamesMin: ['Do','Lu','Ma','Mi','Ju','Vi','Sá'],
+ weekHeader: 'Sm',
+ dateFormat: 'yy/mm/dd',
+ firstDay: 1,
+ isRTL: false,
+ showMonthAfterYear: false,
+ yearSuffix: ''
+ };
+ $.datepicker.setDefaults($.datepicker.regional['es']);
+    $( "#datepicker" ).datepicker();
+    var myDate = new Date();
+var prettyDate =myDate.getFullYear() + '/' +(myDate.getMonth()+1) + '/' + myDate.getDate();
+        
+$("#datepicker").val(prettyDate);
+  } );
+  </script>
+
+</div>
