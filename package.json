@@ -4,6 +4,11 @@
   "description": "Servicios de informacion de rutas y tarifas",
   "main": "server.js",
   "author": "Steven Solano Rojas",
+  "scripts": {
+    "start": "node server.js",
+    "monitor": "nodemon server.js",
+    "deploy": "gcloud app deploy app.yaml"
+  },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "",
