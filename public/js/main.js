@@ -54,29 +54,32 @@ var prettyDate =myDate.getFullYear() + '/' +(myDate.getMonth()+1) + '/' + myDate
             itemsPerPage: 15,
             fillLastPage: true
         } 
+        
+        $scope.tiquetes = [];
+        
+        $http.get('/rutas/dropdown')
+            .success(function(data) {
+                $scope.rutas = data;
+            })
+            .error(function(data) {
+                console.log('Error: ' + data);
+            });
+        
         $http.get('/buses/listar')
             .success(function(data) {
 
                 $scope.buses = data;
-                console.log(data);
             })
             .error(function(data) {
                 console.log('Error: ' + data);
             });
 
-            $http.get('/rutas/dropdown')
-            .success(function(data) {
-
-                $scope.rutas = data;
-                console.log(data);
-            })
-            .error(function(data) {
-                console.log('Error: ' + data);
-            });
-
+            
             $scope.obtenerTiquetes = function() {
                 $scope.formData.busSeleccionado = $scope.busSeleccionado;
-                $scope.formData.rutaSeleccionada = $scope.rutaSeleccionada;
+                $scope.formData.rutaSeleccionada = $scope.rutaSelec;
+                console.log($scope.formData.busSeleccionado);
+                console.log($scope.formData.rutaSeleccionada);
         $http.post('/tiquetes/listar', $scope.formData)
             .success(function(data) {
 

@@ -7,10 +7,10 @@ var fs = require("fs");
 var jwt    = require('jsonwebtoken');
 var config = require('./config'); // get our config file
 var connection = mysql.createConnection({
-   host: 'localhost',
+   host: '',
    user: 'root',
    password: '',
-   database: 'busticketdb',
+   database: 'hogun',
    port: 3306
 });
 // Configuring Passport
@@ -231,7 +231,7 @@ function fsExisteSync(ruta) {
 
 
 app.get('/resumen', isAuthenticated, function (req, res) {
-	connection.query('SELECT Ruta.nombre, SUM(TOTAL) total FROM Tiquete inner join Ruta on Tiquete.ruta = Ruta.idRuta', function(error, filas, resultado){
+	connection.query('select ruta.nombre, sum(total) total from tiquete inner join ruta on tiquete.ruta = ruta.idruta group by ruta.nombre', function(error, filas, resultado){
       if(error){
         res.send(error);
       }else{
@@ -244,7 +244,7 @@ app.get('/resumen', isAuthenticated, function (req, res) {
 
 app.post('/resumen', isAuthenticated, function (req, res) {
 	
-connection.query('SELECT Ruta.nombre, SUM(TOTAL) total FROM Tiquete inner join Ruta on Tiquete.ruta = Ruta.idRuta where date(fecha) = ?', [req.body.fecha], function(error, filas, resultado){
+connection.query('select ruta.nombre, sum(total) total from tiquete inner join ruta on tiquete.ruta = ruta.idruta where date(fecha) = ? group by ruta.nombre', [req.body.fecha], function(error, filas, resultado){
       if(error){
          res.send(error);
       }else{
@@ -254,7 +254,7 @@ connection.query('SELECT Ruta.nombre, SUM(TOTAL) total FROM Tiquete inner join R
 });
 
 app.get('/buses/listar', isAuthenticated, function(req, res){
-  connection.query('SELECT id, placa FROM bus b inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
+  connection.query('select id, placa from bus b inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
       if(error){
         res.send(error);
       }else{
@@ -265,7 +265,7 @@ app.get('/buses/listar', isAuthenticated, function(req, res){
 
 app.get('/rutas/dropdown', isAuthenticated, function (req, res) {
   
-connection.query('SELECT r.idRuta, r.nombre FROM ruta r inner join busesxruta br on r.idRuta = br.ruta inner join bus b on br.bus = b.id inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
+connection.query('select r.idRuta, r.nombre from ruta r inner join busesxruta br on r.idruta = br.ruta inner join bus b on br.bus = b.id inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
       if(error){
         res.send(error);
       }else{
@@ -275,7 +275,7 @@ connection.query('SELECT r.idRuta, r.nombre FROM ruta r inner join busesxruta br
 });
 
 app.post('/tiquetes/listar', isAuthenticated, function (req, res) {
-connection.query('SELECT DATE_FORMAT(fecha, \'\%d-\%m-\%Y \%h:\%i \%p\') as fecha, a.nombre as origen, b.nombre as destino, t.total, t.numeroPasajes as cantidad, t.adultoMayor as cedula FROM Tiquete t inner join Region a on t.origen = a.idRegion inner join Region b on t.origen = b.idRegion where date(fecha) = ? and t.bus = ? and t.ruta = ?', [req.body.fecha, req.body.busSeleccionado.id, req.body.rutaSeleccionada.idRuta], function(error, filas, resultado){
+connection.query('SELECT DATE_FORMAT(fecha, \'\%d-\%m-\%Y \%h:\%i \%p\') as fecha, a.nombre as origen, b.nombre as destino, t.total, t.numeropasajes as cantidad, t.adultomayor as cedula from tiquete t inner join region a on t.origen = a.idregion inner join region b on t.origen = b.idregion where date(fecha) = ? and t.bus = ? and t.ruta = ?', [req.body.fecha, req.body.busSeleccionado.id, req.body.rutaSeleccionada.idRuta], function(error, filas, resultado){
       if(error){
          res.send(error);
       }else{
