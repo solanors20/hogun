@@ -244,7 +244,7 @@ app.get('/resumen', isAuthenticated, function (req, res) {
 
 app.post('/resumen', isAuthenticated, function (req, res) {
 	
-connection.query('select ruta.nombre, sum(total) total from tiquete inner join ruta on tiquete.ruta = ruta.idruta where date(fecha) = ? group by ruta.nombre', [req.body.fecha], function(error, filas, resultado){
+connection.query('select r.nombre, b.placa, sum(total) total from tiquete t inner join ruta r on t.ruta = r.idruta inner join bus b on t.bus = b.id where date(t.fecha) = ? group by r.nombre,b.placa', [req.body.fecha], function(error, filas, resultado){
       if(error){
          res.send(error);
       }else{

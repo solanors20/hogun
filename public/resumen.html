@@ -13,17 +13,21 @@
 	</form>
 	<br>
 	<br>
-    <table class="table">
+    <table class="table table-striped">
 		<thead>
 	        <tr>
 	          <th>Ruta</th>
+	          <th>Placa</th>
 	          <th>Total</th>
 	        </tr>
       	</thead>
-	  	<tbody ng-repeat="todo in todos">
+	  	<tbody ng-repeat="todo in todos track by $index">
         	<tr>
 				<td>
 					{{ todo.nombre }} 
+				</td>
+				<td>
+					{{ todo.placa }} 
 				</td>
 				<td>
 					₡{{ todo.total }} 
