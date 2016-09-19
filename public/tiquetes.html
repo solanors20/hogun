@@ -4,23 +4,41 @@
   	<div class="row">
 	  <div class="col-lg-3">
 	    <div class="input-group">
-	    <select class="form-control" ng-model="busSeleccionado" ng-options="bus as bus.placa for bus in buses track by bus.id">
-    
-</select>
-	      
+	    	<table>
+	    		<tr>
+	    			<td>
+	    				Bus:	
+	    			</td>
+	    			<td>
+	    				<select class="form-control" 
+					    		ng-model="busSeleccionado" 
+					    		ng-options="bus as bus.placa for bus in buses track by bus.id">
+						</select>	
+	    			</td>
+	    		</tr>
+	    	</table>
 	    </div><!-- /input-group -->
 	  </div><!-- /.col-lg-6 -->
 	  <div class="col-lg-3">
 	    <div class="input-group">
-	    	<select class="form-control"
-	    		ng-model="rutaSelec" 
-	    		ng-options="ruta as ruta.nombre for ruta in rutas track by ruta.idRuta">
-		</select>
-	      
+	    	<table>
+	    		<tr>
+	    			<td>
+	    				Ruta:	
+	    			</td>
+	    			<td>
+	    				<select class="form-control"
+					    		ng-model="rutaSelec" 
+					    		ng-options="ruta as ruta.nombre for ruta in rutas track by ruta.idRuta">
+						</select>	
+	    			</td>
+	    		</tr>
+	    	</table>
 	    </div><!-- /input-group -->
 	  </div><!-- /.col-lg-6 -->
 	  <div class="col-lg-4">
 	    <div class="input-group">
+	    	<p class="form-control-static"> Fecha: </p>
 	    	<input type="text" id="datepicker" ng-model="formData.fecha">
 		<button type="submit" class="btn btn-default btn-success" ng-click="obtenerTiquetes()">Consultar</button>
 	    </div>

@@ -4,14 +4,15 @@ var bodyParser = require('body-parser');    // pull information from HTML POST (
 var multer = require('multer');
 var mysql = require('mysql');
 var fs = require("fs");
+var handlebars = require('handlebars');
 var jwt    = require('jsonwebtoken');
 var config = require('./config'); // get our config file
-var connection = mysql.createConnection({
-   host: '',
-   user: 'root',
-   password: '',
-   database: 'hogun',
-   port: 3306
+var pool = mysql.createPool({
+  connectionLimit : 15,
+  host            : '',
+  user            : '',
+  password        : '',
+  database        : ''
 });
 // Configuring Passport
 var passport = require('passport');
@@ -19,13 +20,6 @@ var LocalStrategy = require('passport-local').Strategy;
 var expressSession = require('express-session');
 var bCrypt = require('bcrypt-nodejs');
 var flash = require('connect-flash');
-
-//app.set('superSecret', config.secret); // secret variable
-/**app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "http://localhost");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});*/
 
 // Localización de los ficheros estaticos
 app.use(express.static(__dirname + '/public'));
@@ -38,7 +32,11 @@ app.use(expressSession({secret: 'aff123s',
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-
+app.use('/rutas', require('./routes/rutas.js')(pool));
+app.use('/tarifas', require('./routes/tarifas.js')(pool));
+app.use('/regiones', require('./routes/regiones.js')(pool));
+app.use('/paradas', require('./routes/paradas.js')(pool));
+app.use('/tiquetes', require('./routes/tiquetes.js')(pool));
 
 // Passport needs to be able to serialize and deserialize users to support persistent login sessions
 passport.serializeUser(function(user, done) {
@@ -46,14 +44,17 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-	connection.query('SELECT * FROM usuario where id = ?', [id], function(error, filas, resultado){
-    if(error){
-       return done(error);
-    }else{
-       if(resultado.length > 0){
-       	done(error, filas[0]);
-       }
-    }
+  pool.getConnection(function(err, connection) {
+    connection.query('SELECT * FROM usuario where id = ?', [id], function(error, filas, resultado){
+      if(error){
+         return done(error);
+      }else{
+         if(resultado.length > 0){
+          done(error, filas[0]);
+         }
+      }
+    });
+    connection.release();
   });
 });
 
@@ -80,24 +81,27 @@ passport.use('login', new LocalStrategy({
     passReqToCallback : true
   },
   function(req, username, password, done) { 
-    connection.query('SELECT * FROM usuario where cedula = ?', [username], function(error, filas, resultado){
-      if(error){
-         return done(error);
-      }else{
-         if(filas.length > 0){
-         	if (!isValidPassword(filas[0], password)){
-	          return done(null, false, 
-	              req.flash('message', 'Invalid Password'));
-	        }
-	        // User and password both match, return user from 
-	        // done method which will be treated like success
-	        return done(null, filas[0]);
-         }else{
-          	return done(null, false, 
-                req.flash('message', 'User Not found.')); 
-         }
-      }
-   });
+    pool.getConnection(function(err, connection) {
+      connection.query('SELECT * FROM usuario where cedula = ?', [username], function(error, filas, resultado){
+        if(error){
+           return done(error);
+        }else{
+           if(filas.length > 0){
+            if (!isValidPassword(filas[0], password)){
+              return done(null, false, 
+                  req.flash('message', 'Clave no válida.'));
+            }
+            // User and password both match, return user from 
+            // done method which will be treated like success
+            return done(null, filas[0]);
+           }else{
+              return done(null, false, 
+                  req.flash('message', 'Usuario no válido.')); 
+           }
+        }
+      });
+      connection.release();
+    });
 }));
 
 
@@ -108,88 +112,30 @@ app.post('/login', passport.authenticate('login', {
 		failureFlash : true  
 }));
 
-app.get('/', function(req, res) { 
-    res.sendFile(__dirname + '/public/auth.html');            
+app.get('/', function(req, res) {
+  // read the file and use the callback to render
+  fs.readFile(__dirname + '/public/auth.html', function(err, data){
+    if (!err) {
+      // make the buffer into a string
+      var source = data.toString();
+      // call the render function
+      res.send(renderToString(source, { message: req.flash('message') }));
+    } else {
+      res.send('error');
+    }
+  }); 
+  
+    //res.sendFile(__dirname + '/public/auth.html');            
 });
+
+function renderToString(source, data) {
+  var template = handlebars.compile(source);
+  var outputString = template(data);
+  return outputString;
+}
 
 app.get('/home', isAuthenticated, function(req, res){
 	res.sendFile(__dirname + '/public/home.html');
-});
-
-app.get('/tarifas/listar/', function (req, res) {
-	if(req.query.placa){
-	 	connection.query('CALL listarTarifasPorBus(?)', [req.query.placa], function(error, filas){
-	      	if(error){
-	         	res.send(error);
-	      	}else{
-	      		res.json(filas[0]);
-	      	}
-   		});	
-	}else if (req.query.ruta){
-		connection.query('CALL listarTarifasPorRuta(?)', [req.query.ruta], function(error, filas){
-		    if(error){
-		        res.send(error);
-		    }else{
-		      res.json(filas[0]);
-		    }
-		});
-	}else{
-		res.json([]);
-	}
-});
-
-app.get('/regiones/listar/', function (req, res) {
-	connection.query('CALL listarRegiones()', function(error, filas){
-	    if(error){
-	        res.send(error);
-	    }else{
-	      res.json(filas[0]);
-	    }
-	});
-});
-
-app.get('/paradas/listar/', function (req, res) {
-	if(req.query.placa){
-	 	connection.query('CALL listarParadasPorBus(?)', [req.query.placa], function(error, filas){
-	      	if(error){
-	         	res.send(error);
-	      	}else{
-	      		res.json(filas[0]);
-	      	}
-   		});	
-	}else{
-		res.json([]);
-	}
-});
-
-
-app.get('/rutas/listar/', function (req, res) {
-	if(req.query.placa){
-	 	connection.query('CALL listarRutasPorBus(?)', [req.query.placa], function(error, filas){
-	      	if(error){
-	         	res.send(error);
-	      	}else{
-	      		res.json(filas[0]);
-	      	}
-   		});	
-	}else{
-		res.json([]);
-	}
-});
-
-app.post('/tiquetes/agregar', function	(req, res){
-	var info = req.body.data;
-	if(req.body.data){
-	 	connection.query('CALL agregarTiquetes(?)', [req.body.data], function(error, filas){
-	      	if(error){
-	         	res.json({"Error" :  error });
-	      	}else{
-	      		res.json({"Success" : "Se agrego exitosamente"});
-	      	}
-   		});	
-	}else{
-		res.json({"Error" : "Parametros no validos"});
-	}
 });
 
 app.post('/cedulas/subir', function(request, response) {
@@ -231,57 +177,43 @@ function fsExisteSync(ruta) {
 
 
 app.get('/resumen', isAuthenticated, function (req, res) {
-	connection.query('select ruta.nombre, sum(total) total from tiquete inner join ruta on tiquete.ruta = ruta.idruta group by ruta.nombre', function(error, filas, resultado){
+  pool.getConnection(function(err, connection) {
+    connection.query('select ruta.nombre, sum(total) total from tiquete inner join ruta on tiquete.ruta = ruta.idruta group by ruta.nombre', function(error, filas, resultado){
       if(error){
         res.send(error);
       }else{
         res.json(filas);
       }
-   });
-
+    });
+    connection.release();
+  });	
 });
 
 
 app.post('/resumen', isAuthenticated, function (req, res) {
-	
-connection.query('select r.nombre, b.placa, sum(total) total from tiquete t inner join ruta r on t.ruta = r.idruta inner join bus b on t.bus = b.id where date(t.fecha) = ? group by r.nombre,b.placa', [req.body.fecha], function(error, filas, resultado){
-      if(error){
-         res.send(error);
-      }else{
-         res.json(filas);
-      }
-   });
+  pool.getConnection(function(err, connection) {
+    connection.query('select r.nombre, b.placa, sum(total) total from tiquete t inner join ruta r on t.ruta = r.idruta inner join bus b on t.bus = b.id where date(t.fecha) = ? group by r.nombre,b.placa', [req.body.fecha], function(error, filas, resultado){
+        if(error){
+           res.send(error);
+        }else{
+           res.json(filas);
+        }
+     });
+    connection.release();
+  });	
 });
 
 app.get('/buses/listar', isAuthenticated, function(req, res){
-  connection.query('select id, placa from bus b inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
+  pool.getConnection(function(err, connection) {
+    connection.query('select id, placa from bus b inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
       if(error){
         res.send(error);
       }else{
         res.json(filas);
       }
-   });
-});
-
-app.get('/rutas/dropdown', isAuthenticated, function (req, res) {
-  
-connection.query('select r.idRuta, r.nombre from ruta r inner join busesxruta br on r.idruta = br.ruta inner join bus b on br.bus = b.id inner join busesxusuario bu on b.id = bu.bus where usuario = ?', [req.user.id], function(error, filas, resultado){
-      if(error){
-        res.send(error);
-      }else{
-        res.json(filas);
-      }
-   });
-});
-
-app.post('/tiquetes/listar', isAuthenticated, function (req, res) {
-connection.query('SELECT DATE_FORMAT(fecha, \'\%d-\%m-\%Y \%h:\%i \%p\') as fecha, a.nombre as origen, b.nombre as destino, t.total, t.numeropasajes as cantidad, t.adultomayor as cedula from tiquete t inner join region a on t.origen = a.idregion inner join region b on t.origen = b.idregion where date(fecha) = ? and t.bus = ? and t.ruta = ?', [req.body.fecha, req.body.busSeleccionado.id, req.body.rutaSeleccionada.idRuta], function(error, filas, resultado){
-      if(error){
-         res.send(error);
-      }else{
-        res.json(filas);
-      }
-   });
+    });
+    connection.release();
+  });
 });
 
 var server = app.listen(8080, function () {
